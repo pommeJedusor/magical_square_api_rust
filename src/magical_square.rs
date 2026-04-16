@@ -53,6 +53,9 @@ fn get_moves(position: &Position) -> Vec<u8>{
 
     let mut moves = vec![];
     if is_subgrid_filled(&position){
+        if x < 8 && y < 8 {
+            moves.push(position.index + 22);
+        }
         if x > 1 && y > 1 {
             moves.push(position.index - 22);
         }
@@ -62,21 +65,18 @@ fn get_moves(position: &Position) -> Vec<u8>{
         if x > 1 && y < 8 {
             moves.push(position.index + 18);
         }
-        if x < 8 && y < 8 {
-            moves.push(position.index + 22);
-        }
     }else {
-        if x > 2 {
-            moves.push(position.index - 3);
-        }
         if x < 7 {
             moves.push(position.index + 3);
         }
-        if y > 2 {
-            moves.push(position.index - 30);
+        if x > 2 {
+            moves.push(position.index - 3);
         }
         if y < 7 {
             moves.push(position.index + 30);
+        }
+        if y > 2 {
+            moves.push(position.index - 30);
         }
     }
 
@@ -129,4 +129,28 @@ pub fn get_moves_from_graph(graph: &HashMap<u128, HashPosition>, hash: u128) -> 
         return hash_position.moves.iter().map(|x| x >> 100).map(|x| x as u8).collect();
     }
     vec![]
+}
+
+pub fn get_path_from_index(graph: &HashMap<u128, HashPosition>, mut index: u32) -> Vec<u8>{
+    assert!(index < 33938944);
+
+    let mut path = vec![0];
+    let mut node = graph.get(&1).unwrap();
+    while path.len() < 100 {
+        for r#move in &node.moves {
+            if let Some(child_node) = graph.get(r#move){
+                if index < child_node.nb_sub_path{
+                    node = child_node;
+                    path.push((r#move >> 100) as u8);
+                    break;
+                }else {
+                    index -= child_node.nb_sub_path;
+                }
+            }else {
+                path.push((r#move >> 100) as u8);
+            }
+        }
+    }
+
+    path
 }
