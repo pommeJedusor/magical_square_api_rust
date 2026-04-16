@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use axum::{Router, extract::{Path, State}, routing::get};
+use axum::{Router, extract::{Path, State}, http::StatusCode, response::Response, routing::get};
 
 use crate::magical_square::{HashPosition, get_moves_from_graph, make_graph, get_path_from_index};
 pub mod magical_square;
@@ -17,17 +17,30 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn get_moves(State(state): State<Arc<HashMap<u128, HashPosition>>>, Path(hash): Path<u128>) -> String {
+async fn get_moves(State(state): State<Arc<HashMap<u128, HashPosition>>>, Path(hash): Path<u128>) -> Response<String> {
     let moves = get_moves_from_graph(&state, hash);
-    format!("{:?}", moves)
+    Response::builder()
+        .status(StatusCode::OK)
+        .header("Access-Control-Allow-Origin", "*")
+        .header("Cache-Control", "max-age=604800")
+        .body(format!("{:?}", moves))
+        .unwrap()
 }
 
-async fn get_path(State(state): State<Arc<HashMap<u128, HashPosition>>>, Path(index): Path<u32>) -> String {
+async fn get_path(State(state): State<Arc<HashMap<u128, HashPosition>>>, Path(index): Path<u32>) -> Response<String> {
     // index shouldn't be 33938944 or more
     if index >= 33938944 {
-        return "[]".to_string();
+        return Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body("[]".to_string())
+            .unwrap();
     }
 
-    let moves = get_path_from_index(&state, index);
-    format!("{:?}", moves)
+    let path = get_path_from_index(&state, index);
+    Response::builder()
+        .status(StatusCode::OK)
+        .header("Access-Control-Allow-Origin", "*")
+        .header("Cache-Control", "max-age=604800")
+        .body(format!("{:?}", path))
+        .unwrap()
 }
