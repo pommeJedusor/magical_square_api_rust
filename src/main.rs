@@ -13,7 +13,7 @@ async fn main() {
         .route("/get_moves/{hash}", get(get_moves))
         .route("/get_path/{index}", get(get_path))
         .with_state(shared_state);
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:8000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
