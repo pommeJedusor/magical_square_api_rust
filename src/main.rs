@@ -1,8 +1,14 @@
 use std::{collections::HashMap, sync::Arc};
 
-use axum::{Router, extract::{Path, State}, http::StatusCode, response::Response, routing::get};
+use axum::{
+    Router,
+    extract::{Path, State},
+    http::StatusCode,
+    response::Response,
+    routing::get,
+};
 
-use crate::magical_square::{HashPosition, get_moves_from_graph, make_graph, get_path_from_index};
+use crate::magical_square::{HashPosition, get_moves_from_graph, get_path_from_index, make_graph};
 pub mod magical_square;
 
 #[tokio::main]
@@ -17,7 +23,10 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn get_moves(State(state): State<Arc<HashMap<u128, HashPosition>>>, Path(hash): Path<u128>) -> Response<String> {
+async fn get_moves(
+    State(state): State<Arc<HashMap<u128, HashPosition>>>,
+    Path(hash): Path<u128>,
+) -> Response<String> {
     let moves = get_moves_from_graph(&state, hash);
     Response::builder()
         .status(StatusCode::OK)
@@ -27,7 +36,10 @@ async fn get_moves(State(state): State<Arc<HashMap<u128, HashPosition>>>, Path(h
         .unwrap()
 }
 
-async fn get_path(State(state): State<Arc<HashMap<u128, HashPosition>>>, Path(index): Path<u32>) -> Response<String> {
+async fn get_path(
+    State(state): State<Arc<HashMap<u128, HashPosition>>>,
+    Path(index): Path<u32>,
+) -> Response<String> {
     // index shouldn't be 33938944 or more
     if index >= 33938944 {
         return Response::builder()
