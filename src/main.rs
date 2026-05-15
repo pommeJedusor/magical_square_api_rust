@@ -8,7 +8,9 @@ use axum::{
     routing::get,
 };
 
-use crate::magical_square::{HashPosition, get_moves_from_graph, get_path_from_index, make_graph};
+use crate::magical_square::{
+    HashPosition, SOLUTION_NUMBER, get_moves_from_graph, get_path_from_index, make_graph,
+};
 pub mod magical_square;
 
 #[tokio::main]
@@ -40,8 +42,8 @@ async fn get_path(
     State(state): State<Arc<HashMap<u128, HashPosition>>>,
     Path(index): Path<u32>,
 ) -> Response<String> {
-    // index shouldn't be 33938944 or more
-    if index >= 33938944 {
+    // index shouldn't be higher nor equal to the number of solution
+    if index >= SOLUTION_NUMBER {
         return Response::builder()
             .status(StatusCode::NOT_FOUND)
             .body("[]".to_string())

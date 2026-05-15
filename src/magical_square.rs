@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 const FULL_BOARD: u128 = 0b1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111;
+pub const SOLUTION_NUMBER: u32 = 33938944;
 
 #[derive(Clone, Debug)]
 pub struct HashPosition {
@@ -162,7 +163,7 @@ pub fn get_moves_from_graph(graph: &HashMap<u128, HashPosition>, hash: u128) -> 
 }
 
 pub fn get_path_from_index(graph: &HashMap<u128, HashPosition>, mut index: u32) -> Vec<u8> {
-    assert!(index < 33938944);
+    assert!(index < SOLUTION_NUMBER);
 
     let mut path = vec![0];
     let mut node = graph.get(&1).unwrap();
