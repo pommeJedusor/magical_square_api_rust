@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+const FULL_BOARD: u128 = 0b1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111;
+
 #[derive(Clone, Debug)]
 pub struct HashPosition {
     pub nb_sub_path: u32,
@@ -8,22 +10,35 @@ pub struct HashPosition {
 
 #[derive(Clone, Debug)]
 struct Position {
-    board: u128,
-    index: u8,
+    position: u128,
+}
+
+impl Position {
+    fn get_board(&self) -> u128 {
+        self.position & FULL_BOARD
+    }
+    fn get_index(&self) -> u8 {
+        (self.position >> 100) as u8
+    }
+    fn get_position(&self) -> u128 {
+        self.position
+    }
+    fn is_grid_full(&self) -> bool {
+        self.get_board() == FULL_BOARD
+    }
+    fn new(board: u128, index: u8) -> Self {
+        let index = (index as u128) << 100;
+        let position = board | index;
+        Self { position }
+    }
+    fn get_hash(&self) -> u128 {
+        self.position
+    }
 }
 
 impl HashPosition {
     fn new(nb_sub_path: u32, moves: Vec<u128>) -> Self {
         Self { nb_sub_path, moves }
-    }
-}
-
-impl Position {
-    fn new(board: u128, index: u8) -> Self {
-        Self { board, index }
-    }
-    fn get_hash(&self) -> u128 {
-        (self.index as u128) << 100 | self.board
     }
 }
 
@@ -45,52 +60,52 @@ fn get_subgrid(index: u8) -> u128 {
 }
 
 fn is_subgrid_filled(position: &Position) -> bool {
-    let subgrid_bitmap = get_subgrid(position.index);
-    subgrid_bitmap & position.board ^ subgrid_bitmap == 0
+    let subgrid_bitmap = get_subgrid(position.get_index());
+    subgrid_bitmap & position.get_position() ^ subgrid_bitmap == 0
 }
 
 fn get_moves(position: &Position) -> Vec<u8> {
-    let x = position.index % 10;
-    let y = position.index / 10;
+    let x = position.get_index() % 10;
+    let y = position.get_index() / 10;
 
     let mut moves = vec![];
     if is_subgrid_filled(&position) {
         if x < 8 && y < 8 {
-            moves.push(position.index + 22);
+            moves.push(position.get_index() + 22);
         }
         if x > 1 && y > 1 {
-            moves.push(position.index - 22);
+            moves.push(position.get_index() - 22);
         }
         if x < 8 && y > 1 {
-            moves.push(position.index - 18);
+            moves.push(position.get_index() - 18);
         }
         if x > 1 && y < 8 {
-            moves.push(position.index + 18);
+            moves.push(position.get_index() + 18);
         }
     } else {
         if x < 7 {
-            moves.push(position.index + 3);
+            moves.push(position.get_index() + 3);
         }
         if x > 2 {
-            moves.push(position.index - 3);
+            moves.push(position.get_index() - 3);
         }
         if y < 7 {
-            moves.push(position.index + 30);
+            moves.push(position.get_index() + 30);
         }
         if y > 2 {
-            moves.push(position.index - 30);
+            moves.push(position.get_index() - 30);
         }
     }
 
     moves
         .iter()
-        .filter(|x| (1 << (**x as u128) & position.board) == 0)
+        .filter(|x| (1 << (**x as u128) & position.get_board()) == 0)
         .map(|x| *x)
         .collect()
 }
 
 fn make_move(position: &Position, r#move: u8) -> Position {
-    Position::new(position.board | (1 << r#move), r#move)
+    Position::new(position.get_board() | (1 << r#move), r#move)
 }
 
 fn explore_moves(
@@ -98,7 +113,7 @@ fn explore_moves(
     nb_sub_path_hashtable: &mut HashMap<u128, u32>,
     position: &Position,
 ) -> u32 {
-    if position.board == 0b1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111 {
+    if position.is_grid_full() {
         return 1;
     }
     let position_hash = position.get_hash();
