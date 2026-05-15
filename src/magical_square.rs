@@ -38,7 +38,8 @@ impl Position {
 }
 
 impl HashPosition {
-    fn new(nb_sub_path: u32, moves: Vec<u8>) -> Self {
+    fn new(nb_sub_path: u32, mut moves: Vec<u8>) -> Self {
+        moves.shrink_to(moves.len());
         Self { nb_sub_path, moves }
     }
 }
@@ -176,3 +177,5 @@ pub fn get_path_from_index(graph: &HashMap<u128, HashPosition>, mut index: u32) 
 
     path
 }
+
+mod test {}
