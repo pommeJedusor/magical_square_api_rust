@@ -46,18 +46,12 @@ impl HashPosition {
 fn get_subgrid(index: u8) -> u128 {
     let x = index % 10 % 3;
     let y = index / 10 % 3;
-    let xs = (x..10).step_by(3).collect::<Vec<u8>>();
-    let ys = (y..10).step_by(3).collect::<Vec<u8>>();
 
-    let mut bitmap = 0;
-    for index in xs
-        .iter()
-        .map(|x| ys.iter().map(|y| y * 10 + x).collect::<Vec<u8>>())
-        .flatten()
-    {
-        bitmap |= 1 << index;
-    }
-    bitmap
+    let subgrid_indexes = (x..10)
+        .step_by(3)
+        .flat_map(|x| (y..10).step_by(3).map(|y| y * 10 + x).collect::<Vec<u8>>());
+
+    subgrid_indexes.fold(0, |bitmap, index| bitmap | (1 << index))
 }
 
 fn is_subgrid_filled(position: &Position) -> bool {
@@ -70,7 +64,7 @@ fn get_moves(position: &Position) -> Vec<u8> {
     let y = position.get_index() / 10;
 
     let mut moves = vec![];
-    if is_subgrid_filled(&position) {
+    if is_subgrid_filled(position) {
         if x < 8 && y < 8 {
             moves.push(position.get_index() + 22);
         }
@@ -99,9 +93,8 @@ fn get_moves(position: &Position) -> Vec<u8> {
     }
 
     moves
-        .iter()
-        .filter(|x| (1 << (**x as u128) & position.get_board()) == 0)
-        .map(|x| *x)
+        .into_iter()
+        .filter(|x| (1 << (*x as u128) & position.get_board()) == 0)
         .collect()
 }
 
@@ -125,8 +118,8 @@ fn explore_moves(
 
     let mut nb_sub_path = 0;
     let mut winning_moves = vec![];
-    for r#move in get_moves(&position) {
-        let new_position = make_move(&position, r#move);
+    for r#move in get_moves(position) {
+        let new_position = make_move(position, r#move);
         let move_nb_sub_path = explore_moves(graph, nb_sub_path_hashtable, &new_position);
         nb_sub_path += move_nb_sub_path;
         if move_nb_sub_path > 0 {
