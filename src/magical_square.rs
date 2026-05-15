@@ -6,7 +6,7 @@ pub const SOLUTION_NUMBER: u32 = 33938944;
 #[derive(Clone, Debug)]
 pub struct HashPosition {
     pub nb_sub_path: u32,
-    pub moves: Vec<u128>,
+    pub moves: Vec<u8>,
 }
 
 #[derive(Clone, Debug)]
@@ -38,7 +38,7 @@ impl Position {
 }
 
 impl HashPosition {
-    fn new(nb_sub_path: u32, moves: Vec<u128>) -> Self {
+    fn new(nb_sub_path: u32, moves: Vec<u8>) -> Self {
         Self { nb_sub_path, moves }
     }
 }
@@ -123,7 +123,7 @@ fn explore_moves(
         let move_nb_sub_path = explore_moves(graph, nb_sub_path_hashtable, &new_position);
         nb_sub_path += move_nb_sub_path;
         if move_nb_sub_path > 0 {
-            winning_moves.push(new_position.get_hash());
+            winning_moves.push((new_position.get_hash() ^ position_hash).trailing_zeros() as u8);
         }
     }
 
@@ -145,12 +145,7 @@ pub fn make_graph() -> HashMap<u128, HashPosition> {
 
 pub fn get_moves_from_graph(graph: &HashMap<u128, HashPosition>, hash: u128) -> Vec<u8> {
     if let Some(hash_position) = graph.get(&hash) {
-        return hash_position
-            .moves
-            .iter()
-            .map(|x| x >> 100)
-            .map(|x| x as u8)
-            .collect();
+        return hash_position.moves.clone();
     }
     vec![]
 }
@@ -160,18 +155,21 @@ pub fn get_path_from_index(graph: &HashMap<u128, HashPosition>, mut index: u32) 
 
     let mut path = vec![0];
     let mut node = graph.get(&1).unwrap();
+    let mut board = 1u128;
     while path.len() < 100 {
         for r#move in &node.moves {
-            if let Some(child_node) = graph.get(r#move) {
+            let new_board = board | 1u128 << (*r#move as u128) | (*r#move as u128) << 100;
+            if let Some(child_node) = graph.get(&new_board) {
                 if index < child_node.nb_sub_path {
                     node = child_node;
-                    path.push((r#move >> 100) as u8);
+                    path.push(*r#move);
+                    board = new_board & FULL_BOARD;
                     break;
                 } else {
                     index -= child_node.nb_sub_path;
                 }
             } else {
-                path.push((r#move >> 100) as u8);
+                path.push(*r#move);
             }
         }
     }
